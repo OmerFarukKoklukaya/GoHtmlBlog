@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>{{.Meta.PageTitle}}</title>
+    <link href="/assets/admin/styles.css" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+</head>
+<body class="sb-nav-fixed">
+
+    {{template "AdminLayout" .Meta}}
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-table me-1"></i>
+                    {{.Meta.PageTitle}}
+                </div>
+                <div class="card-body">
+                    {{if .Meta.AuthedUser.Role.IsHavePermission "edit_permissions"}}
+                    <a class="btn btn-primary" href="/admin/permissions/form">add</a>
+                    <br><br>
+                    {{end}}
+
+                    <table class="table table-bordered  table-hover ">
+                        <thead class="table-secondary">
+                        <tr>
+                            <th>Name</th>
+                            {{if .Meta.AuthedUser.Role.IsHavePermission "edit_permissions"}}
+                            <th>Actions</th>
+                            {{end}}
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {{range .Data}}
+                        <tr>
+                            <td>{{.Name}}</td>
+                            <td class="hideable_control">
+                                <a class="btn btn-primary" href="/admin/permissions/{{.ID}}">Edit</a>
+                                <button class="btn btn-danger" onclick="deletePermission('{{.ID}}')" >Delete</button>
+                            </td>
+                        </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {{template "Pagination" .Meta.Pagination}}
+        </main>
+    </div>
+</div>
+    <script>
+    window.addEventListener('DOMContentLoaded', event =>{
+        controlAuthorizationAndHide({{.Meta.AuthedUser.Role.IsHavePermission "edit_permissions"}})
+    })
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="/scripts/admin/scripts.js"></script>
+</body>
+</html>

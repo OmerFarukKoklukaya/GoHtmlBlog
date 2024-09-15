@@ -1,0 +1,37 @@
+{{define "NavBar"}}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{.BaseURL}}/blogs">Has Hakiki Blog</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                {{if not .AuthedUser.ID}}
+                <li class="nav-item"><a class="nav-link active" href="{{.BaseURL}}/login">Login</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{{.BaseURL}}/register">Register</a></li>
+                {{else}}
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center col-lg-4 mb-2 mb-lg-0 link-body-emphasis text-decoration-none dropdown-toggle show" data-bs-toggle="dropdown" aria-expanded="true">
+                        <span class="nav-link active">
+                            {{.AuthedUser.Name}}
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu text-small shadow" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(0px, 34px, 0px);" data-popper-placement="bottom-start">
+                        <li><a class="dropdown-item" href="{{.BaseURL}}/user">Profile</a></li>
+                        <li><a class="dropdown-item" href="{{.BaseURL}}/blogs/editor">Create Blog</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {{if .AuthedUser.Role.IsHaveEditPermission}}
+                        <li><a class="dropdown-item" href="{{.BaseURL}}/admin">Open Admin Panel</a></li>
+                        {{end}}
+                        <li><button class="dropdown-item" onclick='logout()'>Logout</button></li>
+                    </ul>
+
+                </div>
+                {{end}}
+            </ul>
+            <script>
+
+            </script>
+        </div>
+    </div>
+</nav>
+{{end}}

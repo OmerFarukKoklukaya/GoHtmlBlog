@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>{{.Meta.PageTitle}}</title>
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="/assets/default/styles.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <!-- Responsive navbar-->
+        {{template "NavBar" .Meta}}
+        <!-- Page content-->
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-lg-8">
+
+                    <h1 class="d-grid"><input type="text" id="title" placeholder="Title" value="{{.Data.Title}}" ></h1>
+
+                    {{if .Data.Image}}
+                    <img src="{{.Meta.BaseURL}}{{.Data.Image}}">
+                    <a class="btn btn-danger" onclick="deleteImage('{{.Data.ID}}')">Delete Image</a>
+                    {{end}}
+
+                    <input class="btn btn-primary" type="file" id="image" name="image">
+
+
+                    <div>
+                        <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+                        <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+                        <div id="editor">
+                            <h2>Gel Rafik </h2>
+                            <p>Na buraya bir şeyler yazılacak </p>
+                        </div>
+                    </div>
+
+                    {{if not .Data.Title}}
+                    <div class="d-grid"><button onclick="sendBlog('','POST')" class="btn btn-primary" >Send</button></div>
+                    {{else}}
+                    <button class="btn btn-primary" onclick="sendBlog('{{.Data.ID}}','PUT')">Send</button>
+                    {{end}}
+
+
+                    {{if .Data.Body}}
+                    <script>
+                        const htmlString = `{{.Data.Body}}`;
+                        console.log(htmlString)
+                        document.getElementById('editor').innerHTML = htmlString
+                    </script>
+                    {{end}}
+
+                    <script>
+                        const quill = new Quill('#editor', {
+                            theme: 'snow'
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Core theme JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/scripts/default/scripts.js"></script>
+
+    </body>
+</html>
