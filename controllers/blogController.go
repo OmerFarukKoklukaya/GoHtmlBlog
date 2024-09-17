@@ -22,7 +22,7 @@ func PostBlog(c *fiber.Ctx) error {
 	newBlog.Body = c.FormValue("body")
 	newBlog.Summary = c.FormValue("summary")
 	if newBlog.Title == "" || newBlog.Body == "" || newBlog.Summary == "" {
-		return c.SendStatus(fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON("Title nor body cannot be empty")
 	}
 	/*if len(newBlog.Body) < 50 {
 		newBlog.Summary = newBlog.Body
@@ -40,10 +40,10 @@ func PostBlog(c *fiber.Ctx) error {
 	_, err := db.NewInsert().Model(&newBlog).Exec(ctx)
 	if err != nil {
 		fmt.Println(err)
-		return c.JSON(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(err)
 
 	}
-	return c.JSON(fiber.Map{"data": newBlog})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": newBlog})
 }
 func PutBlog(c *fiber.Ctx) error {
 	db := database.DB
@@ -59,6 +59,10 @@ func PutBlog(c *fiber.Ctx) error {
 	blog.UserID, _ = strconv.Atoi(userID)
 	blog.Summary = c.FormValue("summary")
 
+	if blog.Title == "" || blog.Body == "" || blog.Summary == "" {
+		return c.Status(fiber.StatusBadRequest).JSON("Title nor body cannot be empty")
+	}
+
 	/*
 		if len(blog.Body) < 50 {
 			blog.Summary = blog.Body
@@ -68,7 +72,7 @@ func PutBlog(c *fiber.Ctx) error {
 	*/
 	db.NewSelect().Model(&oldBlog).Where("id = ?", blog.ID).Scan(ctx)
 	if oldBlog.ID <= 0 {
-		return c.JSON("bad request")
+		return c.Status(fiber.StatusBadRequest).JSON("bad request")
 	}
 	authedUser, _ = middlewares.SelectAuthenticatedUser(c, db)
 	if !middlewares.IsAuthorized(c, "", blog.ID) || blog.UserID <= 0 {
@@ -82,7 +86,7 @@ func PutBlog(c *fiber.Ctx) error {
 		fmt.Println(err)
 		return c.JSON(err)
 	}
-	return c.JSON(fiber.Map{"data": blog})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"data": blog})
 }
 func DeleteBlog(c *fiber.Ctx) error {
 	db := database.DB
@@ -101,5 +105,5 @@ func DeleteBlog(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	db.NewDelete().Model(&models.Blog{}).Where("id = ?", blogId).Exec(ctx)
-	return c.JSON("Blog successfully deleted")
+	return c.Status(fiber.StatusOK).JSON("Blog successfully deleted")
 }

@@ -91,8 +91,12 @@
                     fetch(BaseURL+'/api/blogs/images/' + data.data.id, {
                         method: 'POST',
                         body: imgForm
-                    }).then( (response) => {
-                        window.location.assign(BaseURL+'/blogs/' + id)
+                    }).then( (response) => response ).then(async response => {
+                        if(response.status !== 200){
+                            document.getElementById("err").innerText = await response.json()
+                        }else {
+                            window.location.assign(BaseURL + '/blogs/' + id)
+                        }
                     })
 
                 })
