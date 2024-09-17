@@ -29,7 +29,13 @@
                 {{end}}
             </ul>
             <script>
-
+                function logout(){
+                    fetch(BaseURL+"/api/logout",{
+                        method: 'POST'
+                    }).then(response => {
+                        window.location.assign(BaseURL);
+                    })
+                }
             </script>
         </div>
     </div>
