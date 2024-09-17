@@ -66,6 +66,14 @@
         window.addEventListener('DOMContentLoaded', event =>{
             controlAuthorizationAndHide({{.Meta.AuthedUser.Role.IsHavePermission "edit_permissions"}})
         })
+
+        function deleteBlog(id){
+            fetch(BaseURL + '/api/blog/' + id,{
+                method: 'DELETE',
+            }).then((response)=>{
+                window.location.assign(BaseURL + '/admin/blogs/')
+            })
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="/scripts/admin/scripts.js"></script>

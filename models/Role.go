@@ -23,9 +23,6 @@ func (role Role) IsHaveEditPermission() bool {
 		if permission.Name[:4] == "edit" {
 			return true
 		}
-		if permission.Name[:4] == "read" && permission.Name[5:] != "roles" {
-			return true
-		}
 	}
 	return false
 }

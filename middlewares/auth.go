@@ -9,6 +9,7 @@ import (
 	"goHtmlBlog/database"
 	"goHtmlBlog/models"
 	"goHtmlBlog/utils"
+	"strconv"
 	"strings"
 )
 
@@ -22,7 +23,7 @@ func AuthenticationMiddleware(c *fiber.Ctx) error {
 }
 
 // IsAuthorized
-// if permission groups name is nil group name on link is become permissionGroup
+// if permission groups name is nil, group name on link is become permission group name
 func IsAuthorized(c *fiber.Ctx, groupName string, targetID int) bool {
 	db := database.DB
 
@@ -67,27 +68,42 @@ func IsAuthorized(c *fiber.Ctx, groupName string, targetID int) bool {
 
 func AuthorizationMiddleware(c *fiber.Ctx) error {
 	db := database.DB
-	fmt.Println(c.Path())
-
 	var authedUser, err = SelectAuthenticatedUser(c, db)
 	if err != nil {
-		fmt.Println(authedUser)
+		fmt.Println(err)
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	var authedRole models.Role
 	db.NewSelect().Model(&authedRole).Where("\"role\".\"id\" = ?", authedUser.RoleID).Relation("Permissions").Scan(context.Background())
 
-	groupName, _ := strings.CutPrefix(c.Path(), "/api")
-	groupName, _ = strings.CutPrefix(c.Path(), "/admin")
+	groupName, isCut := strings.CutPrefix(c.Path(), "/api")
+	if !isCut {
+		groupName, _ = strings.CutPrefix(c.Path(), "/admin")
+	}
 	if groupName == "" {
 		return c.Next()
 	}
 	groupName, _, _ = strings.Cut(groupName[1:], "/")
+	fmt.Println(groupName)
 	if groupName[len(groupName)-1:] != "s" {
 		groupName = groupName + "s"
 	}
-
 	fmt.Println(groupName)
+
+	var modelMap = make(map[string]any)
+	parameter := strings.Split(c.Path(), "/")
+	targetID, err := strconv.Atoi(parameter[len(parameter)-1])
+	fmt.Println(targetID)
+	if err == nil {
+		err = db.NewSelect().Model(&modelMap).Table(groupName).Where("id = ?", targetID).Scan(context.Background())
+	}
+	fmt.Println(&modelMap)
+
+	if (groupName == "blogs" && c.Route().Method == "POST") || (groupName == "blogs" && modelMap["user_id"] == int64(authedUser.ID)) {
+		return c.Next()
+	} else if groupName == "users" && modelMap["id"] == int64(authedUser.ID) {
+		return c.Next()
+	}
 
 	for _, permission := range authedRole.Permissions {
 		if c.Route().Method == "POST" || c.Route().Method == "PUT" || c.Route().Method == "DELETE" {

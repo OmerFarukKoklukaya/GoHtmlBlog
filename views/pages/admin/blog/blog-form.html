@@ -63,6 +63,52 @@
     const quill = new Quill('#editor', {
         theme: 'snow'
     });
+
+    function sendBlog(id, method) {
+        const title = document.getElementById('title');
+        const body = document.getElementById('editor');
+        const user_id = document.getElementById('user_id');
+        const formData = new FormData();
+
+        const sum = document.getElementById('summary');
+        console.log(user_id.value)
+        if (sum.value === ""){
+            sum.value = document.getElementById('editor').firstElementChild.textContent.slice(0, 50)
+            if (sum.length === 50) {
+                sum.value += '...'
+            }
+        }
+
+
+        formData.append('user_id', user_id.value)
+        formData.append('title', title.value)
+        formData.append('body', body.firstElementChild.innerHTML)
+        formData.append('summary', sum.value)
+
+        const urlEncodedData = new URLSearchParams(formData).toString();
+
+        fetch(BaseURL+'/api/blog/' + id, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            },
+            body: urlEncodedData
+        }).then((resposne) => resposne.json()).then(data => {
+            const image = document.getElementById('image').files[0]
+            if (image !== null) {
+                const imgForm = new FormData()
+                imgForm.append('image', image)
+                fetch(BaseURL + '/api/blogs/images/' + data.data.id, {
+                    method: 'POST',
+                    body: imgForm
+                }).then((response) => {
+                    window.location.assign(BaseURL + '/admin/blogs/' + id)
+                })
+            }else {
+                window.location.assign(BaseURL + '/admin/blogs/' + id)
+            }
+        })
+    }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script src="/scripts/admin/scripts.js"></script>

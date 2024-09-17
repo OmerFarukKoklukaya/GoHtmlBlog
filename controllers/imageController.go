@@ -23,17 +23,20 @@ func GetImage(c *fiber.Ctx) error {
 
 func PostImage(c *fiber.Ctx) error {
 	db := database.DB
+
 	form, err := c.MultipartForm()
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
+
 	var blog models.Blog
 	var authedUser models.User
 	authedUser, err = middlewares.SelectAuthenticatedUser(c, db)
 	if err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
+
 	db.NewSelect().Model(&blog).Where("id = ?", id).Scan(ctx)
 	if blog.ID == 0 {
 		return c.SendStatus(fiber.StatusNotFound)
@@ -53,7 +56,6 @@ func PostImage(c *fiber.Ctx) error {
 	file := form.File["image"][0]
 	Header := strings.Split(file.Header["Content-Type"][0], "/")
 	fileType := Header[0]
-	//fileFormat := Header[1]
 	if fileType != "image" {
 		return c.SendString("unacceptable file type")
 	}
@@ -64,7 +66,7 @@ func PostImage(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON("Img problem")
 	}
 
-	blog.Image = "/api/files/images/blog/" + strconv.Itoa(blog.ID)
+	blog.Image = "/api/blogs/images/" + strconv.Itoa(blog.ID)
 	_, err = db.NewUpdate().Model(&blog).Column("image").Where("id = ?", blog.ID).Exec(ctx)
 	if err != nil {
 		fmt.Println("POST IMAGE: update blog err:", err)

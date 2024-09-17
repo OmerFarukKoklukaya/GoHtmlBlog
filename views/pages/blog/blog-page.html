@@ -6,8 +6,6 @@
         <meta name="description" content="" />
         <meta name="author" content="" />
         <title>{{.Meta.PageTitle}}</title>
-        <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="/assets/default/styles.css" rel="stylesheet" />
     </head>
@@ -48,6 +46,14 @@
         <script>
             const htmlString = `{{.Data.Body}}`;
             document.getElementById('body').innerHTML = htmlString;
+
+            function deleteBlog(id){
+                fetch(BaseURL + '/api/blog/' + id,{
+                    method: 'DELETE',
+                }).then((response)=>{
+                    window.location.assign(BaseURL + '/blogs/')
+                })
+            }
         </script>
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

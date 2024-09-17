@@ -1,4 +1,4 @@
-package Handlers
+package handlers
 
 import (
 	"fmt"
@@ -10,12 +10,7 @@ import (
 )
 
 func LoginPage(c *fiber.Ctx) error {
-	err := c.Query("error")
-
 	viewData := models.ViewData{
-		Data: struct {
-			Err string
-		}{Err: err},
 		Meta: models.Meta{
 			PageTitle: "Login",
 			BaseURL:   BaseURL,

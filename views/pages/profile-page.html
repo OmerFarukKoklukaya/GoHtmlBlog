@@ -27,6 +27,8 @@
                                        value="{{.Data.User.Name}}"/>
                                 <label for="name">Name</label>
                             </div>
+                            <div id="errName" class="text-bg-danger"></div>
+
                             <div class="mt-4 mb-0">
                                 <div class="d-grid">
                                     <button onclick="updateUserName('{{.Data.User.ID}}')" class="btn btn-primary">Change Name</button>
@@ -36,32 +38,35 @@
                 </div>
                 <div class="card-header"><h3 class="text-center font-weight-light my-1">Change Password</h3></div>
                 <div class="card-body">
+                    <div class="row mb-3">
                         <div class="form-floating mb-3 mb-md-0">
                             <input class="form-control" id="password" name="password"
                                    type="password" placeholder="Confirm password"/>
                             <label for="password">Password</label>
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3 mb-md-0">
-                                    <input class="form-control" id="new_password" name="new_password" type="password"
-                                           placeholder="Create a password"/>
-                                    <label for="password">New Password</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3 mb-md-0">
-                                    <input class="form-control" id="new_password_verification" name="new_password_verification"
-                                           type="password" placeholder="Confirm password"/>
-                                    <label for="new_password_verification">Confirm Password</label>
-                                </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="new_password" name="new_password" type="password"
+                                       placeholder="Create a password"/>
+                                <label for="new_password">New Password</label>
                             </div>
                         </div>
-                        <div class="mt-4 mb-0">
-                            <div class="d-grid">
-                                <button onclick="updatePassword('{{.Data.User.ID}}')" class="btn btn-primary">Change Password</button>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 mb-md-0">
+                                <input class="form-control" id="new_password_verification" name="new_password_verification"
+                                       type="password" placeholder="Confirm Password"/>
+                                <label for="new_password_verification">Confirm Password</label>
                             </div>
                         </div>
+                    </div>
+                    <div id="errPass" class="text-bg-danger"></div>
+                    <div class="mt-4 mb-0">
+                        <div class="d-grid">
+                            <button onclick="updatePassword('{{.Meta.AuthedUser.ID}}')" class="btn btn-primary">Change Password</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             {{end}}
@@ -87,6 +92,60 @@
 </div>
 
 <!-- Core theme JS-->
+<script>
+    function updateUserName(id) {
+    const name = document.getElementById('name');
+    const data = JSON.stringify({name: name.value, id: id})
+
+
+    fetch(BaseURL+'/api/user' , {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: data
+    }).then((response) => response).then(async response => {
+        const errJson = await response.json()
+        if (response.status !== 200){
+            document.getElementById("errName").innerText = errJson
+        }else {
+            window.location.assign(BaseURL + '/login')
+        }
+    })
+}
+
+    function updatePassword(id) {
+        const password = document.getElementById('password');
+        const new_password = document.getElementById('new_password');
+        const new_password_verification = document.getElementById('new_password_verification');
+        const formData = new FormData();
+
+        formData.append('password', password.value)
+        formData.append('new_password', new_password.value)
+        formData.append('new_password_verification', new_password_verification.value)
+
+        const urlEncodedData = new URLSearchParams(formData).toString();
+
+        fetch(BaseURL+'/api/user/password/' + id , {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+            body: urlEncodedData
+        }).then((response) => response ).then(async response => {
+            const errJson = await response.json()
+            if (response.status !== 200){
+                document.getElementById("errPass").innerText = errJson
+            }else {
+                fetch(BaseURL + '/api/logout', {
+                    method: 'POST'
+                }).then((response) => {
+                        window.location.assign(BaseURL + '/login')
+                })
+            }
+        })
+    }
+</script>
 <script src="/scripts/default/scripts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 

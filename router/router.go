@@ -3,8 +3,9 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"goHtmlBlog/Handlers"
 	"goHtmlBlog/controllers"
+	"goHtmlBlog/handlers"
+	adminHandlers "goHtmlBlog/handlers/adminPanel"
 	"goHtmlBlog/middlewares"
 )
 
@@ -20,7 +21,6 @@ func Router(app *fiber.App) {
 func nonAuthedRoutes(app *fiber.App) {
 	api := app.Group("/api")
 	blogs := app.Group("/blogs")
-	files := api.Group("/files")
 
 	////////
 	api.Post("/register", controllers.Register)
@@ -28,36 +28,35 @@ func nonAuthedRoutes(app *fiber.App) {
 	api.Post("/logout", controllers.Logout)
 	////////
 	app.Get("/", func(c *fiber.Ctx) error { return c.Redirect("/blogs") })
-	app.Get("/register", Handlers.RegisterPage)
-	app.Get("/login", Handlers.LoginPage)
-	app.Get("/user/:id<int>?", Handlers.ProfilePage)
+	app.Get("/register", handlers.RegisterPage)
+	app.Get("/login", handlers.LoginPage)
+	app.Get("/user/:id<int>?", handlers.ProfilePage)
 	////////
 
 	////////
 	app.Get("/assets/:pageName?/styles*", controllers.CSSController)
 	app.Get("/scripts/:pageName?/scripts*", controllers.JSController)
-	files.Get("/images/blog/:id", controllers.GetImage)
+	api.Get("/blogs/images/:id", controllers.GetImage)
 	////////
 
 	////////
-	blogs.Get("/", Handlers.BlogsPage)
-	blogs.Get("/:id<int>", Handlers.BlogPage)
+	blogs.Get("/", handlers.BlogsPage)
+	blogs.Get("/:id<int>", handlers.BlogPage)
 
 }
 
 func authedRoutes(app *fiber.App) {
 	api := app.Group("/api")
 	blogs := app.Group("/blogs")
-	files := api.Group("/files")
 	////////
 
 	////////
-	files.Post("/images/blog/:id", controllers.PostImage)
-	files.Delete("/images/blog/:id", controllers.DeleteImage)
+	api.Post("/blogs/images/:id", controllers.PostImage)
+	api.Delete("/blogs/images/:id", controllers.DeleteImage)
 	////////
 
 	////////
-	blogs.Get("/editor/:id<int>?", Handlers.BlogEditorPage)
+	blogs.Get("/editor/:id<int>?", handlers.BlogEditorPage)
 	////////
 
 	////////
@@ -68,7 +67,7 @@ func authedRoutes(app *fiber.App) {
 	user := api.Group("/user")
 	user.Post("/", controllers.InsertUser)
 	user.Put("/:id<id>?", controllers.UpdateUser)
-	user.Put("/password", controllers.UpdatePassword)
+	user.Put("/password/:id<int>", controllers.UpdatePassword)
 	user.Delete("/:id<int>", controllers.DeleteProfile)
 
 	////////
@@ -78,7 +77,7 @@ func authedRoutes(app *fiber.App) {
 	roles := api.Group("/roles")
 	roles.Post("/", controllers.PostRole)
 	roles.Put("/:id", controllers.PutRole)
-	roles.Delete("/id", controllers.DeleteRole)
+	roles.Delete("/:id", controllers.DeleteRole)
 	////////
 	permissions := api.Group("/permissions")
 	permissions.Post("/", controllers.PostPermission)
@@ -88,21 +87,21 @@ func authedRoutes(app *fiber.App) {
 
 	////////
 	admin := app.Group("/admin")
-	admin.Get("/", Handlers.AdminDashboard)
+	admin.Get("/", adminHandlers.AdminDashboard)
 	////////
-	admin.Get("/users", Handlers.AdminUsersPage)
-	admin.Get("/users/:id<int>", Handlers.AdminUserPage)
-	admin.Get("/users/form", Handlers.AdminUserFormPage)
+	admin.Get("/users", adminHandlers.AdminUsersPage)
+	admin.Get("/users/:id<int>", adminHandlers.AdminUserPage)
+	admin.Get("/users/form", adminHandlers.AdminUserFormPage)
 	////////
-	admin.Get("/roles", Handlers.AdminRolesPage)
-	admin.Get("/roles/:id<int>", Handlers.AdminRolePage)
-	admin.Get("/roles/form", Handlers.AdminRoleFormPage)
+	admin.Get("/roles", adminHandlers.AdminRolesPage)
+	admin.Get("/roles/:id<int>", adminHandlers.AdminRolePage)
+	admin.Get("/roles/form", adminHandlers.AdminRoleFormPage)
 	////////
-	admin.Get("/permissions", Handlers.AdminPermissionsPage)
-	admin.Get("/permissions/:id<int>", Handlers.AdminPermissionPage)
-	admin.Get("/permissions/form", Handlers.AdminPermissionsFormPage)
+	admin.Get("/permissions", adminHandlers.AdminPermissionsPage)
+	admin.Get("/permissions/:id<int>", adminHandlers.AdminPermissionPage)
+	admin.Get("/permissions/form", adminHandlers.AdminPermissionsFormPage)
 	////////
-	admin.Get("/blogs", Handlers.AdminBlogsPage)
-	admin.Get("/blogs/:id<int>", Handlers.AdminBlogPage)
-	admin.Get("/blogs/form", Handlers.AdminBlogFormPage)
+	admin.Get("/blogs", adminHandlers.AdminBlogsPage)
+	admin.Get("/blogs/:id<int>", adminHandlers.AdminBlogPage)
+	admin.Get("/blogs/form", adminHandlers.AdminBlogFormPage)
 }

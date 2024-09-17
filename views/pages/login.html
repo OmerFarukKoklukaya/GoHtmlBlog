@@ -21,7 +21,7 @@
                                 <div class="card shadow-lg border-0 rounded-lg mt-5">
                                     <div class="card-header"><h3 class="text-center font-weight-light my-4">Login</h3></div>
                                     <div class="card-body">
-                                        <form action="{{.Meta.BaseURL}}/api/login" method="POST">
+                                        <form  id="login-form">
                                             <div class="form-floating mb-3">
                                                 <input class="form-control" id="name" name="name" type="text" placeholder="Name" />
                                                 <label for="name">User Name</label>
@@ -30,11 +30,11 @@
                                                 <input class="form-control" id="password" name="password" type="password" placeholder="Password" />
                                                 <label for="password">Password</label>
                                             </div>
-                                            <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                                <button type="submit" class="btn btn-primary" >Login</button>
-                                                {{if .Data.Err}}<div class="small alert-warning">{{.Data.Err}}</div>{{end}}
-                                            </div>
                                         </form>
+                                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+                                            <button onclick="login()" class="btn btn-primary" >Login</button>
+                                            <div id="err" class="small alert-warning"></div>
+                                        </div>
                                     </div>
                                     <div class="card-footer text-center py-3">
                                         <div class="small"><a href="{{.Meta.BaseURL}}/register">Need an account? Sign up!</a></div>
@@ -47,7 +47,34 @@
             </div>
 
         </div>
+        <script>
+            function login(){
+                const form = document.getElementById("login-form")
+                const formData = new FormData(form)
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+
+                const urlEncodedData = new URLSearchParams(data).toString();
+                fetch(BaseURL + '/api/login/', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    },
+                    body: urlEncodedData
+                }).then((response) => response).then(async response => {
+                    if (response.status !== 200) {
+                        const err = await response.json()
+                        document.getElementById("err").innerText =   err
+                    } else {
+                        window.location.assign(BaseURL + '/blogs')
+                    }
+                })
+            }
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="/scripts/default/scripts.js"></script>
+
     </body>
 </html>

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"goHtmlBlog/database"
@@ -14,32 +15,35 @@ func Register(c *fiber.Ctx) error {
 	db := database.DB
 	userName := c.FormValue("name")
 	if len(userName) == 0 {
-		return c.Redirect("http://localhost:3000/register?error=Name cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Name cannot be empty")
 	}
-	password := c.FormValue("password")
+	password := []byte(c.FormValue("password"))
 	if len(password) == 0 {
-		return c.Redirect("http://localhost:3000/register?error=Password cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Password cannot be empty")
 	}
-	passwordVer := c.FormValue("password_verification")
-	if len(password) == 0 {
-		return c.Redirect("http://localhost:3000/register?error=Password verification cannot be empty")
+	passwordVer := []byte(c.FormValue("password_verification"))
+	if len(passwordVer) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON("Password verification cannot be empty")
 	}
-	if password != passwordVer {
-		return c.Redirect("http://localhost:3000/register?error=Password verification failed")
+	fmt.Println(password, passwordVer)
+	if !bytes.Equal(password, passwordVer) {
+		return c.Status(fiber.StatusBadRequest).JSON("Password verification failed")
 	}
 
 	var user models.User
 	db.NewSelect().Model(&user).Where("name = ?", userName).Relation("Blogs").Scan(ctx)
 	if len(user.Name) != 0 {
-		return c.Redirect("http://localhost:3000/register?error=This name already taken")
+		return c.Status(fiber.StatusBadRequest).JSON("This name already taken")
 	}
 
 	var role models.Role
 	db.NewSelect().Model(&role).Where("name = ?", "basic").Scan(ctx)
-	user = models.User{Name: userName, Password: password, RoleID: role.ID}
+
+	user = models.User{Name: userName, RoleID: role.ID}
+	user.ChangePassword(password)
 	db.NewInsert().Model(&user).Exec(ctx)
 
-	return c.Redirect("http://localhost:3000/login/")
+	return c.SendStatus(fiber.StatusOK)
 }
 func Login(c *fiber.Ctx) error {
 	db := database.DB
@@ -47,18 +51,18 @@ func Login(c *fiber.Ctx) error {
 	userName := c.FormValue("name")
 	if len(userName) == 0 {
 		fmt.Println("Login page problem: name cannot be empty")
-		return c.Redirect("http://localhost:3000/login?error=Name cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Name cannot be empty")
 	}
-	password := c.FormValue("password")
+	password := []byte(c.FormValue("password"))
 	if len(password) == 0 {
 		fmt.Println("Login page problem: password cannot be empty")
-		return c.Redirect("http://localhost:3000/login?error=Password cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Password cannot be empty")
 	}
 
 	err := db.NewSelect().Model(&user).Where("name = ?", userName).Scan(ctx)
-	if user.Password != password {
+	if !user.CheckPassword(password) {
 		fmt.Println("Login err:", err)
-		return c.Redirect("http://localhost:3000/login?error=Wrong Name or Password")
+		return c.Status(fiber.StatusBadRequest).JSON("Wrong Name or Password")
 	}
 
 	c.Cookie(&fiber.Cookie{
@@ -66,7 +70,7 @@ func Login(c *fiber.Ctx) error {
 		Value: utils.GenerateToken(user.ID),
 	})
 
-	return c.Redirect("http://localhost:3000/blogs")
+	return c.SendStatus(fiber.StatusOK)
 }
 func Logout(c *fiber.Ctx) error {
 	c.Cookie(&fiber.Cookie{
@@ -80,19 +84,23 @@ func InsertUser(c *fiber.Ctx) error {
 	db := database.DB
 	var user models.User
 	user.Name = c.FormValue("name")
-	user.Password = c.FormValue("password")
+	password := []byte(c.FormValue("password"))
 	user.RoleID, _ = strconv.Atoi(c.FormValue("role_id"))
+	if user.Name == "" || len(password) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON("Name or Password cannot be empty")
+	}
+	user.ChangePassword(password)
 	if user.RoleID <= 0 {
 		user.RoleID = 2
 	}
+
 	authedUser, err := middlewares.SelectAuthenticatedUser(c, db)
 	if authedUser.ID == 0 || err != nil || !middlewares.IsAuthorized(c, "", 1) {
 		return c.SendStatus(fiber.StatusUnauthorized)
 		fmt.Println(err)
 	}
-	fmt.Println("USER DELETED_AT", user.DeletedAt)
 
-	db.NewInsert().Model(&user).Column("name", "role_id", "password", "deleted_at").Exec(ctx)
+	db.NewInsert().Model(&user).Exec(ctx)
 
 	return c.SendStatus(200)
 }
@@ -132,15 +140,8 @@ func UpdateUser(c *fiber.Ctx) error {
 }
 func DeleteProfile(c *fiber.Ctx) error {
 	db := database.DB
-	authedUser := models.User{}
-	authedUser, err := middlewares.SelectAuthenticatedUser(c, db)
-	if err != nil {
-		return c.SendStatus(fiber.StatusUnauthorized)
-	}
+	authedUser, _ := middlewares.SelectAuthenticatedUser(c, db)
 	id, _ := c.ParamsInt("id")
-	if !middlewares.IsAuthorized(c, "", id) {
-		return c.SendStatus(fiber.StatusUnauthorized)
-	}
 	fmt.Println("DELETEPROFILE: ID:", id)
 	if id <= 0 {
 		return c.Status(fiber.StatusBadRequest).JSON("unacceptable id")
@@ -150,37 +151,37 @@ func DeleteProfile(c *fiber.Ctx) error {
 	}
 
 	db.NewDelete().Model(&models.User{}).Where("id = ?", id).Exec(ctx)
-	return c.JSON("DeleteProfile")
+	return c.SendStatus(fiber.StatusOK)
 }
 func UpdatePassword(c *fiber.Ctx) error {
-	oldPassword := c.FormValue("password")
-	if oldPassword == "" {
-		return c.Redirect("http://localhost:3000/api/user/password?error=Password Cannot Be Empty")
+	oldPassword := []byte(c.FormValue("password"))
+	if len(oldPassword) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON("Password Cannot Be Empty")
 	}
-	password := c.FormValue("new_password")
-	if password == "" {
-
-		return c.Redirect("http://localhost:3000/api/user/password?error=New Password Cannot Be Empty")
+	newPassword := []byte(c.FormValue("new_password"))
+	if len(newPassword) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON("New Password Cannot Be Empty")
 	}
-	passVerification := c.FormValue("new_password_verification")
-	if passVerification == "" {
-		return c.Redirect("http://localhost:3000/api/user/password?error=New Password verification Cannot Be Empty")
+	passVerification := []byte(c.FormValue("new_password_verification"))
+	if len(passVerification) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON("New Password verification Cannot Be Empty")
 	}
-	if password != passVerification {
-		return c.Redirect("http://localhost:3000/api/user/password?error=Passwords doesnt match")
+	if !bytes.Equal(newPassword, passVerification) {
+		return c.Status(fiber.StatusBadRequest).JSON("Passwords doesnt match")
 	}
 	db := database.DB
 	var user models.User
 	user, err := middlewares.SelectAuthenticatedUser(c, db)
 	if err != nil {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return c.Status(fiber.StatusUnauthorized).JSON("Unauthorized")
 	}
-	if user.Password != oldPassword {
-		return c.Redirect("http://localhost:3000/api/user/password?error=Passwords doesnt match")
+	if !user.CheckPassword(oldPassword) {
+		return c.Status(fiber.StatusBadRequest).JSON("Wrong password")
 	}
 
-	user.Password = password
+	user.ChangePassword(newPassword)
+
 	db.NewUpdate().Model(&user).Where("id = ?", user.ID).Exec(ctx)
 
-	return c.JSON("Change password")
+	return c.SendStatus(fiber.StatusOK)
 }

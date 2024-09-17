@@ -71,6 +71,14 @@
         window.addEventListener('DOMContentLoaded', event =>{
             controlAuthorizationAndHide({{.Meta.AuthedUser.Role.IsHavePermission "edit_roles"}})
         })
+
+        function deleteRole(id){
+            fetch(BaseURL + '/api/role/' + id,{
+                method: 'DELETE',
+            }).then((response)=>{
+                window.location.reload()
+            })
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="/scripts/admin/scripts.js"></script>
