@@ -18,7 +18,7 @@ func PostRole(c *fiber.Ctx) error {
 		fmt.Println("err")
 	}
 	if len(roleAndPermissions.Name) == 0 {
-		return c.JSON("roleAndPermissions name cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Role name cannot be empty")
 	}
 	var role = models.Role{Name: roleAndPermissions.Name}
 	db := database.DB
@@ -28,7 +28,7 @@ func PostRole(c *fiber.Ctx) error {
 		rtp = models.RoleToPermission{RoleID: role.ID, PermissionID: permissionID}
 		db.NewInsert().Model(&rtp).Exec(ctx)
 	}
-	return c.JSON("roles")
+	return c.Status(fiber.StatusOK).JSON("roles")
 }
 
 func PutRole(c *fiber.Ctx) error {
@@ -45,23 +45,24 @@ func PutRole(c *fiber.Ctx) error {
 	}{}
 	err = json.Unmarshal(c.Body(), &roleAndPermissions)
 	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON("some problem?")
 		fmt.Println("err")
 	}
 	if len(roleAndPermissions.Name) == 0 {
-		return c.JSON("role name cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("role name cannot be empty")
 	}
 	role.Name = roleAndPermissions.Name
 	db := database.DB
 	roleID, err := c.ParamsInt("id")
-	if roleID == 0 || err != nil {
-		return c.JSON("bad request")
+	if roleID <= 0 || err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON("bad request")
 	}
 
 	var rtp models.RoleToPermission
 	db.NewDelete().Model(&rtp).Where("role_id = ?", roleID).Exec(ctx)
 	_, err = db.NewUpdate().Model(&role).Column("name").Where("id = ?", roleID).Exec(ctx)
 	if err != nil {
-		return c.JSON("update problem")
+		return c.Status(fiber.StatusInternalServerError).JSON("update problem")
 	}
 
 	for _, permissionID := range roleAndPermissions.Permissions {
@@ -69,18 +70,18 @@ func PutRole(c *fiber.Ctx) error {
 		db.NewInsert().Model(&rtp).Exec(ctx)
 	}
 
-	return c.JSON("roles")
+	return c.Status(fiber.StatusOK).JSON("roles")
 }
 
 func DeleteRole(c *fiber.Ctx) error {
 	roleID, err := c.ParamsInt("id")
 	if roleID == 0 || err != nil {
-		return c.JSON("bad request")
+		return c.Status(fiber.StatusBadRequest).JSON("bad request")
 	}
 	db := database.DB
 	_, err = db.NewDelete().Model(&models.Role{}).Where("id = ?", roleID).Exec(ctx)
 	if err != nil {
-		return c.JSON("delete problem")
+		return c.Status(fiber.StatusInternalServerError).JSON("delete problem")
 	}
-	return c.JSON("roles")
+	return c.Status(fiber.StatusOK).JSON("Successfully deleted.")
 }
