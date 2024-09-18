@@ -92,12 +92,12 @@ func DeleteImage(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	if id == 0 || err != nil {
+	if id <= 0 || err != nil {
 		return c.SendStatus(fiber.StatusBadRequest)
 	}
 	blog.Image = ""
 
-	db.NewUpdate().Model(&blog).Column("image").Where("id = ?", id).Scan(ctx)
+	_, err = db.NewUpdate().Model(&blog).Column("image").Where("id = ?", id).Exec(ctx)
 	os.Remove("./images/blog-" + strconv.Itoa(blog.ID) + ".jpeg")
 	return c.JSON("Image Deleted")
 }
