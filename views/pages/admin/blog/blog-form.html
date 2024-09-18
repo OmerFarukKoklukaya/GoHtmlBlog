@@ -102,7 +102,8 @@
                 if (image !== null) {
                     const imgForm = new FormData()
                     imgForm.append('image', image)
-                    fetch(BaseURL + '/api/blogs/images/' + data.data.id, {
+                    const ret = await response.json()
+                    fetch(BaseURL + '/api/blogs/images/' + ret.data.id, {
                         method: 'POST',
                         body: imgForm
                     }).then((response) => {

@@ -84,20 +84,26 @@
                         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
                     },
                     body: urlEncodedData
-                }).then((resposne) => resposne.json()).then(data => {
-                    const image = document.getElementById('image').files[0]
-                    const imgForm = new FormData()
-                    imgForm.append('image', image)
-                    fetch(BaseURL+'/api/blogs/images/' + data.data.id, {
-                        method: 'POST',
-                        body: imgForm
-                    }).then( (response) => response ).then(async response => {
-                        if(response.status !== 200){
-                            document.getElementById("err").innerText = await response.json()
-                        }else {
+                }).then((response) => response).then(async response => {
+                    if(response.status !== 200){
+                        document.getElementById("err").innerText = await response.json()
+                    }else {
+                        const image = document.getElementById('image').files[0]
+                        if (image !== null) {
+                            const imgForm = new FormData()
+                            imgForm.append('image', image)
+                            const ret = await response.json()
+                            fetch(BaseURL + '/api/blogs/images/' + ret.data.id, {
+                                method: 'POST',
+                                body: imgForm
+                            }).then((response) => response).then(async response => {
+                                window.location.assign(BaseURL + '/blogs/' + id)
+                            })
+                        }else{
                             window.location.assign(BaseURL + '/blogs/' + id)
                         }
-                    })
+
+                    }
 
                 })
             }
