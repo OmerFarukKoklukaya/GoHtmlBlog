@@ -86,6 +86,11 @@ func InsertUser(c *fiber.Ctx) error {
 	user.Name = c.FormValue("name")
 	password := []byte(c.FormValue("password"))
 	user.RoleID, _ = strconv.Atoi(c.FormValue("role_id"))
+	var dummUser models.User
+	db.NewSelect().Model(&dummUser).Where("name = ?", user.Name).Scan(ctx)
+	if len(dummUser.Name) != 0 {
+		return c.Status(fiber.StatusBadRequest).JSON("This name already taken")
+	}
 	if user.Name == "" || len(password) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON("Name or Password cannot be empty")
 	}
@@ -111,27 +116,34 @@ func UpdateUser(c *fiber.Ctx) error {
 
 	user.Name = c.FormValue("name")
 	user.RoleID, _ = strconv.Atoi(c.FormValue("role_id"))
+
 	var authedUser models.User
 	authedUser, err := middlewares.SelectAuthenticatedUser(c, db)
 	if authedUser.ID <= 0 || err != nil {
 		return c.SendStatus(fiber.StatusUnauthorized)
 		fmt.Println(err)
 	}
+
 	if user.ID <= 0 {
 		user.ID = authedUser.ID
 		oldUser = authedUser
 	} else {
-		db.NewSelect().Model(&oldUser).Where("id = ?", user.ID).Relation("Role").Exec(ctx)
+		db.NewSelect().Model(&oldUser).Where("id = ?", user.ID).Scan(ctx)
+		fmt.Println("old user: ", oldUser)
 	}
 	if user.Name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON("name cannot be empty")
 	}
-	if !middlewares.IsAuthorized(c, "", user.ID) {
-		return c.SendStatus(fiber.StatusUnauthorized)
-	}
 
 	if !middlewares.IsAuthorized(c, "roles", 1) || user.RoleID <= 0 {
 		user.RoleID = oldUser.RoleID
+	}
+
+	var dummUser models.User
+	db.NewSelect().Model(&dummUser).Where("name = ?", user.Name).Scan(ctx)
+	fmt.Println("user", user.Name, "old user", oldUser.Name, "dummy user", dummUser.Name)
+	if len(dummUser.Name) != 0 && user.Name != oldUser.Name {
+		return c.Status(fiber.StatusBadRequest).JSON("This name already taken")
 	}
 
 	db.NewUpdate().Model(&user).Column("name", "role_id").Where("id = ?", user.ID).Exec(ctx)

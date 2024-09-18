@@ -112,7 +112,7 @@
                     if (image !== null) {
                         const imgForm = new FormData()
                         imgForm.append('image', image)
-                        fetch(BaseURL + '/api/blogs/images/' + data.data.id, {
+                        fetch(BaseURL + '/api/blogs/images/' + id, {
                             method: 'POST',
                             body: imgForm
                         }).then((response) => {
@@ -127,10 +127,10 @@
     }
 
     function deleteImage(id){
-        fetch(BaseURL + '/api/files/images/blog/' + id,{
+        fetch(BaseURL + '/api/blogs/images/' + id,{
             method: 'DELETE',
         }).then((response)=>{
-            window.location.reload()
+           window.location.reload()
         })
     }
 </script>

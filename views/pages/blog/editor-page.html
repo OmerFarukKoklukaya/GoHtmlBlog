@@ -103,10 +103,10 @@
             }
 
             function deleteImage(id){
-                fetch(BaseURL + '/api/files/images/blog/' + id,{
+                fetch(BaseURL + '/api/blogs/images/' + id,{
                     method: 'DELETE',
                 }).then((response)=>{
-                    window.location.assign(BaseURL + '/editor/' + id)
+                    window.location.assign(BaseURL + '/blogs/editor/' + id)
                 })
             }
         </script>
