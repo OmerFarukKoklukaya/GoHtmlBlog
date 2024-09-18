@@ -25,6 +25,7 @@
                                 <input class="form-control" id="name" name="name" type="text" placeholder="Permission Name" value="{{.Data.Name}}"/>
                                 <label for="name">Name</label>
                             </div>
+                            <div id="err" class="text-danger"></div>
                             <div class="mt-4 mb-0">
                                 <div class="d-grid">
                                 <button onclick="sendPermission('{{.Data.ID}}','PUT')" class="btn btn-primary">Update Permission</button>
@@ -47,16 +48,12 @@
             'Content-Type': 'application/json'
         },
         body: data
-    }).then((response) =>{
-        if(response.status === 200){
-            window.location.replace(BaseURL+'/admin/permissions/' + id)
+    }).then((response) => response).then(async response => {
+        if(response.status !== 200){
+            document.getElementById("err").innerText = await response.json()
         }
         else {
-            response.json().then(data =>{
-
-                document.getElementById('error').innerText = data;
-                document.getElementById('breakBeforeErr').hidden = false;
-            });
+            window.location.replace(BaseURL+'/admin/permissions/' + id)
         }
     })
 

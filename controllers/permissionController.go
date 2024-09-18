@@ -12,7 +12,7 @@ func PostPermission(c *fiber.Ctx) error {
 	var permission models.Permission
 	err := json.Unmarshal(c.Body(), &permission)
 	if err != nil || permission.Name == "" {
-		return c.Status(fiber.StatusBadRequest).JSON("name cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Permission name cannot be empty")
 	}
 
 	db := database.DB
@@ -23,7 +23,7 @@ func PostPermission(c *fiber.Ctx) error {
 	}
 	_, err = db.NewInsert().Model(&permission).Exec(ctx)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON("")
+		return c.Status(fiber.StatusInternalServerError).JSON(err)
 	}
 	return c.JSON("permissions")
 }
@@ -35,9 +35,14 @@ func PutPermission(c *fiber.Ctx) error {
 		fmt.Println("err")
 	}
 	if len(permission.Name) == 0 {
-		return c.JSON("Permission name cannot be empty")
+		return c.Status(fiber.StatusBadRequest).JSON("Permission name cannot be empty")
 	}
 	db := database.DB
+	var dummPermission models.Permission
+	db.NewSelect().Model(&dummPermission).Where("name = ?", permission.Name).Scan(ctx)
+	if dummPermission.Name != "" {
+		return c.Status(fiber.StatusBadRequest).JSON("Already have this permission")
+	}
 	var oldPermission models.Permission
 	oldPermission.ID, err = c.ParamsInt("id")
 	if oldPermission.ID == 0 || err != nil {
@@ -48,7 +53,7 @@ func PutPermission(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON("update problem")
 	}
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(fiber.StatusOK).JSON("")
 }
 
 func DeletePermission(c *fiber.Ctx) error {
@@ -61,5 +66,5 @@ func DeletePermission(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON("delete problem")
 	}
-	return c.JSON("")
+	return c.Status(fiber.StatusOK).JSON("")
 }
