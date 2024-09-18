@@ -35,6 +35,7 @@
                             <p>Na buraya bir şeyler yazılacak </p>
                         </div>
                     </div>
+                    <div id="err" class="text-danger"></div>
 
                     {{if not .Data.Title}}
                     <div class="d-grid"><button onclick="sendBlog('','POST')" class="btn btn-primary" >Send</button></div>
@@ -89,7 +90,7 @@
                         document.getElementById("err").innerText = await response.json()
                     }else {
                         const image = document.getElementById('image').files[0]
-                        if (image !== null) {
+                        if (image !== undefined) {
                             const imgForm = new FormData()
                             imgForm.append('image', image)
                             const ret = await response.json()
@@ -97,7 +98,11 @@
                                 method: 'POST',
                                 body: imgForm
                             }).then((response) => response).then(async response => {
-                                window.location.assign(BaseURL + '/blogs/' + id)
+                                if(response.status !== 200){
+                                    document.getElementById("err").innerText = response.statusText
+                                }else {
+                                    window.location.assign(BaseURL + '/blogs/' + id)
+                                }
                             })
                         }else{
                             window.location.assign(BaseURL + '/blogs/' + id)

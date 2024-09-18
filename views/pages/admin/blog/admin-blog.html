@@ -109,7 +109,7 @@
                 document.getElementById("err").innerText = await response.json()
             }else {
                     const image = document.getElementById('image').files[0]
-                    if (image !== null) {
+                    if (image !== undefined) {
                         const imgForm = new FormData()
                         imgForm.append('image', image)
                         fetch(BaseURL + '/api/blogs/images/' + id, {
