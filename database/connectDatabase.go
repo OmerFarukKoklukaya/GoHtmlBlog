@@ -13,7 +13,7 @@ import (
 var DB *bun.DB
 
 func ConnectDatabase() {
-	dns := "postgres://postgres:user@localhost:5432/blog?sslmode=disable"
+	dns := "postgres://username:password@localhost:5432/blog?sslmode=disable"
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dns)))
 
 	DB = bun.NewDB(sqldb, pgdialect.New())
